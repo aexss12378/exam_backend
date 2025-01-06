@@ -10,7 +10,7 @@ import java.util.ArrayList;
 import java.util.Iterator;
 import java.util.List;
 
-public class StaticManager {
+public class StatisticsManager {
     public static List<ExamRecord> getAllExcel() throws IOException {
         return extractRecords(null); // 提取所有記錄
     }

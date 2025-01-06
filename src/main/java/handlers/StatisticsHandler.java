@@ -1,6 +1,6 @@
 package handlers;
 
-import Manager.StaticManager;
+import Manager.StatisticsManager;
 import com.sun.net.httpserver.HttpHandler;
 import com.sun.net.httpserver.HttpExchange;
 import utils.HttpUtils;
@@ -10,23 +10,23 @@ import java.io.OutputStream;
 import java.util.ArrayList;
 import java.util.List;
 
-public class StaticHandler implements HttpHandler {
+public class StatisticsHandler implements HttpHandler {
     //private final StaticHandler staticHandler = new StaticHandler();
 
     @Override
     public void handle(HttpExchange exchange) throws IOException {
         switch (exchange.getRequestURI().getPath()) {
-            case "/static/getAll":
+            case "/statistics/getAll":
                 if ("GET".equals(exchange.getRequestMethod())) {
-                    handleGetAllStatic(exchange);
+                    handleGetAllStatistics(exchange);
                 } else {
                     HttpUtils.sendErrorResponse(exchange, "Method not allowed for /paper/get");
                 }
                 break;
 
-            case "/static/get":
+            case "/statistics/get":
                 if ("GET".equals(exchange.getRequestMethod())) {
-                    handleGetStatic(exchange);
+                    handleGetStatistics(exchange);
                 } else {
                     HttpUtils.sendErrorResponse(exchange, "Method not allowed for /paper/get");
                 }
@@ -37,15 +37,15 @@ public class StaticHandler implements HttpHandler {
         }
     }
 
-    private void handleGetAllStatic(HttpExchange exchange) throws IOException {
+    private void handleGetAllStatistics(HttpExchange exchange) throws IOException {
         try {
             // 調用 StaticManager 的 getAllExcel 方法獲取資料
-            List<StaticManager.ExamRecord> records = StaticManager.getAllExcel();
+            List<StatisticsManager.ExamRecord> records = StatisticsManager.getAllExcel();
 
             // 轉換資料為 JSON 格式
             StringBuilder jsonResponse = new StringBuilder("[");
             for (int i = 0; i < records.size(); i++) {
-                StaticManager.ExamRecord record = records.get(i);
+                StatisticsManager.ExamRecord record = records.get(i);
                 jsonResponse.append("{")
                         .append("\"name\": \"").append(record.getName()).append("\", ")
                         .append("\"testName\": \"").append(record.getTestName()).append("\", ")
@@ -72,7 +72,7 @@ public class StaticHandler implements HttpHandler {
         }
     }
 
-    private void handleGetStatic(HttpExchange exchange) throws IOException {
+    private void handleGetStatistics(HttpExchange exchange) throws IOException {
         try {
             // 從 URL 中提取參數 username
             String query = exchange.getRequestURI().getQuery();
@@ -84,9 +84,9 @@ public class StaticHandler implements HttpHandler {
             }
 
             // 調用 StaticManager.getAllExcel 過濾 username 對應的資料
-            List<StaticManager.ExamRecord> allRecords = StaticManager.getAllExcel();
-            List<StaticManager.ExamRecord> userRecords = new ArrayList<>();
-            for (StaticManager.ExamRecord record : allRecords) {
+            List<StatisticsManager.ExamRecord> allRecords = StatisticsManager.getExcel(username);
+            List<StatisticsManager.ExamRecord> userRecords = new ArrayList<>();
+            for (StatisticsManager.ExamRecord record : allRecords) {
                 if (record.getName().equals(username)) {
                     userRecords.add(record);
                 }
@@ -101,7 +101,7 @@ public class StaticHandler implements HttpHandler {
             // 轉換資料為 JSON 格式
             StringBuilder jsonResponse = new StringBuilder("[");
             for (int i = 0; i < userRecords.size(); i++) {
-                StaticManager.ExamRecord record = userRecords.get(i);
+                StatisticsManager.ExamRecord record = userRecords.get(i);
                 jsonResponse.append("{")
                         .append("\"name\": \"").append(record.getName()).append("\", ")
                         .append("\"testName\": \"").append(record.getTestName()).append("\", ")
