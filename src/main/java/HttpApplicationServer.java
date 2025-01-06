@@ -15,6 +15,7 @@ public class HttpApplicationServer {
         server.createContext("/exam", new ExamHandler("D:\\oop testfile\\test.xlsx"));
         server.createContext("/paper", new PaperHandler());
         server.createContext("/account", new AccountHandler());
+        server.createContext("/static", new StaticHandler());
         
         // 設置固定大小的執行器，最多允許 10 個線程
         ExecutorService executor = Executors.newFixedThreadPool(10);
