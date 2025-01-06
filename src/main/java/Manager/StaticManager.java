@@ -3,7 +3,6 @@ package Manager;
 import org.apache.poi.ss.usermodel.*;
 import org.apache.poi.xssf.usermodel.XSSFWorkbook;
 
-
 import java.io.File;
 import java.io.FileInputStream;
 import java.io.IOException;
@@ -12,7 +11,15 @@ import java.util.Iterator;
 import java.util.List;
 
 public class StaticManager {
-    public static List<ExamRecord> getExcel() throws IOException {
+    public static List<ExamRecord> getAllExcel() throws IOException {
+        return extractRecords(null); // 提取所有記錄
+    }
+
+    public static List<ExamRecord> getExcel(String username) throws IOException {
+        return extractRecords(username); // 根據 username 提取記錄
+    }
+
+    private static List<ExamRecord> extractRecords(String username) throws IOException {
         // Excel 檔案的路徑
         File file = new File("D:/oop testfile/test.xlsx");
 
@@ -23,30 +30,30 @@ public class StaticManager {
         // 取得第一個工作表
         Sheet sheet = workbook.getSheetAt(0);
 
-        // 用來存儲所有的資料
+        // 用來存儲結果的清單
         List<ExamRecord> records = new ArrayList<>();
 
         // 迭代所有的行
         Iterator<Row> rowIterator = sheet.iterator();
-        rowIterator.next();  // 跳過表頭
+        rowIterator.next(); // 跳過表頭
 
         while (rowIterator.hasNext()) {
             Row row = rowIterator.next();
 
             // 假設欄位順序是 Name, Test Name, Score, Wrong
             String name = row.getCell(0).getStringCellValue();
-            String testName = row.getCell(1).getStringCellValue();
-            double score = row.getCell(2).getNumericCellValue();
-            String wrong = row.getCell(3).getStringCellValue();
+            if (username == null || name.equals(username)) { // 適用於全部或特定用戶
+                String testName = row.getCell(1).getStringCellValue();
+                double score = row.getCell(2).getNumericCellValue();
+                String wrong = row.getCell(3).getStringCellValue();
 
-            // 將每一行的資料轉成 ExamRecord 物件
-            records.add(new ExamRecord(name, testName, score, wrong));
+                records.add(new ExamRecord(name, testName, score, wrong));
+            }
         }
 
         // 關閉 Excel 檔案
         workbook.close();
 
-        // 返回解析後的資料
         return records;
     }
 
