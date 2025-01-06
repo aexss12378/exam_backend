@@ -12,7 +12,7 @@ public class HttpApplicationServer {
         System.out.println("HTTP Server started on port " + port);
 
         // 註冊端點endpoints
-        //server.createContext("/exam", new ExamHandler());
+        server.createContext("/exam", new ExamHandler("D:\\oop testfile\\test.xlsx"));
         server.createContext("/paper", new PaperHandler());
         server.createContext("/account", new AccountHandler());
         

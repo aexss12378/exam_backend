@@ -2,17 +2,20 @@ package handlers;
 
 import com.sun.net.httpserver.HttpHandler;
 import com.sun.net.httpserver.HttpExchange;
-import java.io.IOException;
+import java.io.*;
 
 import Manager.ExamManager;
 import utils.HttpUtils;
 import com.google.gson.Gson;
-import com.google.gson.JsonSyntaxException;
-import java.util.Map;
 
 public class ExamHandler implements HttpHandler {
-    private final ExamManager examManager = new ExamManager(); // 使用實例
-    private final Gson gson = new Gson();
+    private final ExamManager examManager;
+    private final Gson gson;
+
+    public ExamHandler(String excelFilePath) {
+        this.examManager = new ExamManager(excelFilePath);
+        this.gson = new Gson();
+    }
 
     @Override
     public void handle(HttpExchange exchange) throws IOException {
@@ -21,7 +24,7 @@ public class ExamHandler implements HttpHandler {
                 if ("POST".equals(exchange.getRequestMethod())) {
                     handleCheckAnswer(exchange);
                 } else {
-                    HttpUtils.sendErrorResponse(exchange, "Method not allowed for /exams"); // 修正錯誤訊息
+                    HttpUtils.sendErrorResponse(exchange, "Method not allowed for /exams");
                 }
                 break;
 
@@ -32,65 +35,41 @@ public class ExamHandler implements HttpHandler {
 
     private void handleCheckAnswer(HttpExchange exchange) throws IOException {
         try {
-            // 解析請求的 body 資料
             String requestBody = HttpUtils.readRequestBody(exchange);
-            CheckAnswerRequest request = gson.fromJson(requestBody, CheckAnswerRequest.class);
+            ExamSubmission submission = gson.fromJson(requestBody, ExamSubmission.class);
 
-            // 空值檢查
-            if (request.getAnswerPath() == null || request.getSettingPath() == null || request.getMyAnswerPath() == null) {
-                HttpUtils.sendErrorResponse(exchange, "Invalid request: Missing required fields");
+            if (submission == null || submission.getFileName() == null || submission.getFileName().isEmpty()) {
+                HttpUtils.sendErrorResponse(exchange, "無效的提交數據");
                 return;
             }
 
-            // 使用實例方法進行檢查
-            Map<String, Object> result = examManager.checkAnswer(
-                    request.getAnswerPath(),
-                    request.getSettingPath(),
-                    request.getMyAnswerPath()
-            );
+            examManager.checkAnswer(submission.getFileName());
+            String response = gson.toJson(new SuccessResponse("考試檢查完成"));
+            HttpUtils.sendResponse(exchange, response);
 
-            // 回傳結果
-            String jsonResponse = gson.toJson(result);
-            exchange.getResponseHeaders().set("Content-Type", "application/json");
-            exchange.sendResponseHeaders(200, jsonResponse.getBytes().length);
-            exchange.getResponseBody().write(jsonResponse.getBytes());
-            exchange.getResponseBody().close();
-        } catch (JsonSyntaxException e) {
-            e.printStackTrace(); // 提供詳細的錯誤資訊（開發用）
-            HttpUtils.sendErrorResponse(exchange, "Invalid JSON format: " + e.getMessage());
-        } catch (IOException e) {
-            HttpUtils.sendErrorResponse(exchange, "Error processing the request");
+        } catch (Exception e) {
+            e.printStackTrace();
+            HttpUtils.sendErrorResponse(exchange, "處理考試提交時發生錯誤: " + e.getMessage());
         }
     }
 
-    // CheckAnswerRequest 內部類別
-    private static class CheckAnswerRequest {
-        private String answerPath;
-        private String settingPath;
-        private String myAnswerPath;
+    private static class ExamSubmission {
+        private String fileName;
 
-        public String getAnswerPath() {
-            return answerPath;
+        public String getFileName() {
+            return fileName;
         }
 
-        public void setAnswerPath(String answerPath) {
-            this.answerPath = answerPath;
+        public void setFileName(String fileName) {
+            this.fileName = fileName;
         }
+    }
 
-        public String getSettingPath() {
-            return settingPath;
-        }
+    private static class SuccessResponse {
+        private final String message;
 
-        public void setSettingPath(String settingPath) {
-            this.settingPath = settingPath;
-        }
-
-        public String getMyAnswerPath() {
-            return myAnswerPath;
-        }
-
-        public void setMyAnswerPath(String myAnswerPath) {
-            this.myAnswerPath = myAnswerPath;
+        public SuccessResponse(String message) {
+            this.message = message;
         }
     }
 }
